@@ -1,0 +1,96 @@
+/* --- Global Styles --- */
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background-color: #f4f6f8;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #1a73e8;
+    color: white;
+    padding: 15px 0;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8em;
+}
+
+nav {
+    margin-top: 8px;
+}
+
+nav a {
+    color: white;
+    margin: 0 12px;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+main {
+    padding: 30px 15px;
+    min-height: 70vh;
+}
+
+/* --- Forms --- */
+.form-container {
+    background-color: white;
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.form-card input {
+    display: block;
+    width: 90%;
+    margin: 10px auto;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1em;
+}
+
+.btn {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background-color: #1669c1;
+}
+
+/* --- Flash Messages --- */
+.flash-messages {
+    background-color: #ffefc2;
+    border: 1px solid #f4c542;
+    color: #333;
+    padding: 10px;
+    max-width: 500px;
+    margin: 15px auto;
+    border-radius: 6px;
+    text-align: center;
+}
+
+/* --- Footer --- */
+footer {
+    background-color: #1a73e8;
+    color: white;
+    padding: 10px;
+    text-align: center;
+}

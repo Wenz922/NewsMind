@@ -12,14 +12,16 @@ class User(db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(300), nullable=False)
+
     interests = db.Column(db.String(500))
-    preferred_language = db.Column(db.String(50))
+    preferred_language = db.Column(db.String(50), nullable=False, default="en")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
 
     # Set password
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        # force Werkzeug to use pbkdf2 instead of scrypt
+        self.password_hash = generate_password_hash(password, method="pbkdf2:sha256")
 
     # verify password
     def check_password(self, password):
@@ -44,9 +46,9 @@ class Article(db.Model):
     title = db.Column(db.String(500), nullable=False)
     author = db.Column(db.String(100))
     source = db.Column(db.String(500))
-    url = db.Column(db.String(500))
-    category = db.Column(db.String(100))
-    published_at = db.Column(db.DateTime)
+    url = db.Column(db.String(500), unique=True, nullable=False)
+    category = db.Column(db.String(100), nullable=False)
+    published_at = db.Column(db.String(100))
     fetched_at = db.Column(db.DateTime, default=datetime.utcnow)
     summary = db.Column(db.Text)  # LLM-generated summary
     embedding = db.Column(db.Text)  # JSON string for semantic search
@@ -90,7 +92,7 @@ class ChatHistory(db.Model):
     __tablename__ = 'chat_history'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     role = db.Column(db.String(10), nullable=False)  # "user" or "bot"
-    message = db.Column(db.Text)
+    message = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Link ChatHistory to User with foreign key

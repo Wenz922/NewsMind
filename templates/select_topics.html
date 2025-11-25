@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+  <h2>Select Your Favorite News Topics</h2>
+  <form method="POST" action="/select_topics" class="form-card">
+    {% for topic in topics %}
+      <label>
+        <input type="checkbox" name="topics" value="{{ topic }}"> {{ topic.title() }}
+      </label><br>
+    {% endfor %}
+    <button type="submit" class="btn">Save Topics</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+    <h2>Your Personalized News Digest</h2>
+    <p class="subtitle">Latest summaries based on your selected topics.</p>
+
+    {% if articles|length == 0 %}
+        <p>No articles available. Try refreshing your feed.</p>
+    {% else %}
+
+        {% for art in articles %}
+        <div class="article-card">
+            <h3>{{ art.title }}</h3>
+
+            <p class="meta">
+                <b>{{ art.source }}</b> · 
+                {{ art.published_at[:10] if art.published_at else "Unknown date" }}
+            </p>
+
+            <p class="summary">
+                {{ art.summary }}
+            </p>
+
+            <a href="{{ url_for('article_detail', article_id=art.id) }}" class="btn">
+                Read Full Article
+            </a>
+        </div>
+        <hr>
+        {% endfor %}
+
+    {% endif %}
+</div>
+
+{% endblock %}

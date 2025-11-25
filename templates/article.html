@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+    <h2>{{ article.title }}</h2>
+
+    <p class="meta">
+        <b>{{ article.source }}</b> · {{ article.author }} · 
+        {{ article.published_at[:10] if article.published_at else "" }}
+    </p>
+
+    <hr>
+
+    <div class="full-article">
+        {% if full_text %}
+            <p>{{ full_text | safe }}</p>
+        {% else %}
+            <p>⚠️ Unable to load article content.</p>
+        {% endif %}
+    </div>
+
+    <br>
+    <a href="{{ article.url }}" target="_blank" class="external-link">
+        🔗 Open Original Article
+    </a>
+
+    <br><br>
+    <a href="{{ url_for('digest') }}" class="btn">← Back to Digest</a>
+</div>
+
+{% endblock %}

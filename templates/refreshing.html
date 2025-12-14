@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Refreshing your personalized news...</h2>
+
+<div class="spinner"></div>
+
+<script>
+// Trigger actual backend work
+fetch("/refresh_process")
+    .then(res => res.json())
+    .then(data => {
+        window.location.href = "/digest";
+    });
+</script>
+
+{% endblock %}

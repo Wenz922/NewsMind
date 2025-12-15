@@ -80,7 +80,8 @@ def add_user_action(ua, action_name):
     """Append action_name to ua.action JSON list 'viewed', 'liked', or 'linked'."""
     try:
         actions = json.loads(ua.action) if ua.action else []
-    except:
+    except Exception as e:
+        print(f"Load action error: {e}")
         actions = []
 
     if action_name not in actions:
@@ -304,7 +305,8 @@ def rate_article(article_id):
     try:
         rating = int(request.form.get("rating"))
         rating = max(1, min(10, rating))
-    except:
+    except Exception as e:
+        print(f"Error while adding rating: {e}")
         flash("Invalid rating.")
         return redirect(url_for("article_detail", article_id=article_id))
 

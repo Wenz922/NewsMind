@@ -1,7 +1,8 @@
 import requests
 from models import db, Article
 from newspaper import Article as NPArticle
-from .summarizer import summarize_article
+from modules.summarizer import summarize_article, analyze_sentiment
+from modules.embedding_manager import generate_embedding
 
 import os
 from dotenv import load_dotenv
@@ -68,26 +69,32 @@ def fetch_from_newsapi(topic, language="en", page_size=5):
         # Limit extremely long text
         full_text = full_text[:5000]
 
-        # Summarize article using OpenAI
+        # Summarize full article using OpenAI
         summary = summarize_article(title, full_text)
+        # Sentiment Analysis using OpenAI
+        sentiment = analyze_sentiment(summary)
+        # Generate embedding
+        embedding = generate_embedding(summary)
     
         # Save to DB Article
         try:
             article = Article(
-                title=title,
-                author=author,
-                source=source,
+                title=title[:500],
+                author=author[:100] if author else "Unknown",
+                source=source[:200],
                 url=url,
                 category=topic,
                 published_at=published_at,
                 fetched_at=datetime.utcnow(),
                 summary=summary,
+                sentiment=sentiment,
+                embedding=embedding
             )
             db.session.add(article)
             db.session.commit()
 
             new_articles += 1
-            print(f"[NewsMind] Saved: {title[:60]}...")
+            print(f"[NewsMind] Saved: '{title[:40]}...', topic={topic} sentiment={sentiment}")
 
         except Exception as e:
             print(f"[NewsMind] DB error: {e}")
@@ -109,11 +116,13 @@ def extract_full_text(url):
         np_art.parse()
         text = np_art.text.strip()
 
+        # Required minimum for meaningful summary
         if len(text) < 200:
             print(f"[NewsMind] Text too short for: {url}")
-            return ""
+            return None
 
         return text
 
     except Exception as e:
-        return f"[Extractor] Failed for {url}: {e}"
+        print(f"[NewsMind] Newspaper failed for {url}: {e}")
+        return None

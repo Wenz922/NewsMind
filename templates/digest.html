@@ -23,6 +23,10 @@
                 {{ art.summary }}
             </p>
 
+            <form action="{{ url_for('like_article', article_id=art.id) }}" method="POST">
+                <button class="btn-small">👍 Like</button>
+            </form>
+
             <a href="{{ url_for('article_detail', article_id=art.id) }}" class="btn">
                 Read Full Article
             </a>

@@ -20,8 +20,24 @@
         {% endif %}
     </div>
 
+    <form action="{{ url_for('like_article', article_id=article.id) }}" method="POST">
+        <button class="btn">👍 Like Article</button>
+    </form>
+
+    <form action="{{ url_for('rate_article', article_id=article.id) }}" method="POST">
+        <label>Rate this article:</label>
+        <input type="number" name="rating" min="1" max="10" required value="{{ ua.rating if ua else '' }}">
+        <button class="btn">Save Rating</button>
+    </form>
+
+    <form action="{{ url_for('save_notes', article_id=article.id) }}" method="POST">
+        <label>Your notes:</label><br>
+        <textarea name="notes" rows="3">{{ ua.notes if ua else '' }}</textarea><br>
+        <button class="btn">Save Notes</button>
+    </form>
+
     <br>
-    <a href="{{ article.url }}" target="_blank" class="external-link">
+    <a href="{{ url_for('open_original', article_id=article.id) }}" target="_blank">
         🔗 Open Original Article
     </a>
 

@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 from models import db, User, Article, UserArticle, ChatHistory, Statistics
 from modules import news_fetcher, summarizer, embedding_manager
 
 import os
+import json
 import logging
 from functools import wraps
 from dotenv import load_dotenv
@@ -39,7 +40,7 @@ logging.basicConfig(
 
 
 # -------------------------------------------------------
-# Login Required Decorator
+# Helper function
 # -------------------------------------------------------
 def login_required(func):
     @wraps(func)
@@ -50,6 +51,43 @@ def login_required(func):
             return redirect("/")
         return func(*args, **kwargs)
     return wrapper
+
+
+def get_current_user():
+    """Get the currently logged-in user from session."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return None
+    return db.session.get(User, user_id)
+
+
+def get_or_create_user_article(user_id, article_id):
+    """Get or create a UserArticle row for this user & article."""
+    ua = UserArticle.query.filter_by(user_id=user_id, article_id=article_id).first()
+    if ua is None:
+        ua = UserArticle(
+            user_id=user_id,
+            article_id=article_id,
+            action=json.dumps([]),  # JSON list of ["viewed", "liked", "linked"]
+            timestamp=datetime.utcnow(),
+        )
+        db.session.add(ua)
+        db.session.commit()
+    return ua
+
+
+def add_user_action(ua, action_name):
+    """Append action_name to ua.action JSON list 'viewed', 'liked', or 'linked'."""
+    try:
+        actions = json.loads(ua.action) if ua.action else []
+    except:
+        actions = []
+
+    if action_name not in actions:
+        actions.append(action_name)
+
+    ua.action = json.dumps(actions)
+    ua.timestamp = datetime.utcnow()
 
 
 # -------------------------------------------------------
@@ -69,7 +107,7 @@ def register():
         password = request.form.get("password")
         language = request.form.get("language", "en")
 
-        # Proper duplicate check
+        # Duplicate check
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash("Username or email already exists.")
             logging.warning(f"Registration failed: Duplicate user '{username}' or email '{email}'.")
@@ -86,7 +124,7 @@ def register():
         db.session.commit()
 
         logging.info(f"New user registered: {username}")
-        flash("Registration successfully, please login.")
+        flash("Registration successfully, please log in.")
         return redirect("/")
 
     logging.info("Registration page visited.")
@@ -111,18 +149,19 @@ def login():
         if not user.interests:
             return redirect("/select_topics")
         return redirect('/digest')
-    else:
-        logging.warning(f"Failed login attempt for username '{username}'.")
-        flash("Invalid username or password")
-        return redirect("/")
+
+    logging.warning(f"Failed login attempt for username '{username}'.")
+    flash("Invalid username or password")
+    return redirect("/")
 
 
 @app.route("/logout")
 @login_required
 def logout():
-    user_id = session['user_id']
+    user = get_current_user()
+    user_name = user.username if user else "unknown"
     session.pop('user_id', None)
-    logging.info(f"User {user_id} logged out.")
+    logging.info(f"User {user_name} logged out.")
     flash("Logged out successfully.")
     return redirect("/")
 
@@ -135,7 +174,7 @@ def select_topics():
         "politics", "world", "entertainment", "lifestyle"
     ]
 
-    user = db.session.get(User, session["user_id"])
+    user = get_current_user()
 
     if request.method == "POST":
         selected_topics = request.form.getlist("topics")
@@ -160,7 +199,8 @@ def select_topics():
 @app.route("/refresh")
 @login_required
 def refresh():
-    user = User.query.get(session["user_id"])
+    user = get_current_user()
+
     logging.info(f"User {user.username} triggered refresh (loading screen shown).")
     return render_template("refreshing.html")
 
@@ -168,9 +208,10 @@ def refresh():
 @app.route("/refresh_process")
 @login_required
 def refresh_process():
-    user = db.session.get(User, session["user_id"])
+    user = get_current_user()
+
     try:
-        topics = [t.strip() for t in user.interests.split(",") if t.strip()]
+        topics = [t.strip() for t in (user.interests or "").split(",") if t.strip()]
         logging.info(f"Starting news refresh for user {user.username}. Topics: {topics}")
 
         total_new = 0
@@ -186,14 +227,14 @@ def refresh_process():
         flash(f"Error during refresh: {e}")
         print("[NewsMind] Refresh error:", e)
 
-    return {"status": "done"}
+    return {"status": "done", "new_articles": total_new}
 
 
 @app.route("/digest")
 @login_required
 def digest():
-    user = db.session.get(User, session["user_id"])
-    topics = [t.strip() for t in user.interests.split(",") if t.strip()]
+    user = get_current_user()
+    topics = [t.strip() for t in (user.interests or "").split(",") if t.strip()]
 
     articles = (
         Article.query.filter(Article.category.in_(topics))
@@ -206,18 +247,115 @@ def digest():
     return render_template("digest.html", articles=articles)
 
 
+# Full Article View + Interactions (viewed, liked, linked), rating, notes
 @app.route("/article/<int:article_id>")
 @login_required
 def article_detail(article_id):
-    article = Article.query.get_or_404(article_id)
-    user = db.session.get(User, session["user_id"])
+    user = get_current_user()
+    article = db.session.get(Article, article_id)
+    if article is None:
+        logging.warning(f"Article {article_id} not found.")
+        abort(404)
 
-    logging.info(f"User {user.username} opened article ID {article_id} – {article.title}")
+    # Action "viewed"
+    ua = get_or_create_user_article(user.id, article_id)
+    add_user_action(ua, "viewed")
+    db.session.commit()
+
+    logging.info(f"User {user.username} viewed article {article_id}: {article.title}")
 
     # extract full text dynamically
     full_text = news_fetcher.extract_full_text(article.url)
 
-    return render_template("article.html", article=article, full_text=full_text)
+    return render_template("article.html", article=article, full_text=full_text, ua=ua)
+
+
+@app.route("/article/<int:article_id>/like", methods=["POST"])
+@login_required
+def like_article(article_id):
+    user = get_current_user()
+    article = db.session.get(Article, article_id)
+    if article is None:
+        logging.warning(f"Article {article_id} not found.")
+        abort(404)
+
+    # Action "liked"
+    ua = get_or_create_user_article(user.id, article_id)
+    add_user_action(ua, "liked")
+    db.session.commit()
+
+    logging.info(f"User {user.username} liked article {article_id}: {article.title}")
+
+    return redirect(url_for("article_detail", article_id=article_id))
+
+
+@app.route("/article/<int:article_id>/rate", methods=["POST"])
+@login_required
+def rate_article(article_id):
+    user = get_current_user()
+    article = db.session.get(Article, article_id)
+    if article is None:
+        logging.warning(f"Article {article_id} not found.")
+        abort(404)
+
+    ua = get_or_create_user_article(user.id, article_id)
+
+    # Add rating
+    try:
+        rating = int(request.form.get("rating"))
+        rating = max(1, min(10, rating))
+    except:
+        flash("Invalid rating.")
+        return redirect(url_for("article_detail", article_id=article_id))
+
+    ua.rating = rating
+    ua.timestamp = datetime.utcnow()
+    db.session.commit()
+
+    logging.info(f"User {user.username} rated article {article_id} as {rating}/10.")
+
+    return redirect(url_for("article_detail", article_id=article_id))
+
+
+@app.route("/article/<int:article_id>/notes", methods=["POST"])
+@login_required
+def save_notes(article_id):
+    user = get_current_user()
+    article = db.session.get(Article, article_id)
+    if article is None:
+        logging.warning(f"Article {article_id} not found.")
+        abort(404)
+
+    ua = get_or_create_user_article(user.id, article_id)
+
+    # Add notes
+    notes = request.form.get("notes", "").strip()
+    ua.notes = notes
+    ua.timestamp = datetime.utcnow()
+    db.session.commit()
+
+    logging.info(f"User {user.username} added notes to article {article_id}.")
+
+    return redirect(url_for("article_detail", article_id=article_id))
+
+
+@app.route("/article/<int:article_id>/open_original")
+@login_required
+def open_original(article_id):
+    user = get_current_user()
+    article = db.session.get(Article, article_id)
+    if article is None:
+        logging.warning(f"Article {article_id} not found.")
+        abort(404)
+
+    ua = get_or_create_user_article(user.id, article_id)
+    # Action "linked"
+    add_user_action(ua, "linked")
+    db.session.commit()
+
+    logging.info(f"User {user.username} opened original link for {article_id}.")
+
+    return redirect(article.url)
 
 
 @app.route("/chat", methods=["GET", "POST"])
@@ -233,5 +371,5 @@ def chat():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-
+    logging.info("NewsMind Flask App started.")
     app.run(debug=True)

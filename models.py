@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import json
+
 
 # Create the SQLAlchemy database instance
 db = SQLAlchemy()
@@ -70,7 +72,7 @@ class Article(db.Model):
 class UserArticle(db.Model):
     __tablename__ = 'user_articles'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    action = db.Column(db.String(30), nullable=False)  # e.g., “liked”, “viewed”, “shared”
+    action = db.Column(db.Text, nullable=True)  # e.g., [“liked”, “viewed”, “linked”]
     rating = db.Column(db.Integer)  # e.g., 1-10 score
     notes = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)  # The changed time when user does action

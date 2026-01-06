@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 from models import db, User, Article, UserArticle, ChatHistory, Statistics
-from modules import news_fetcher, summarizer, embedding_manager
+from modules import news_fetcher, summarizer, embedding_manager, chat_agent
 
 import os
 import json
@@ -363,10 +363,37 @@ def open_original(article_id):
 @app.route("/chat", methods=["GET", "POST"])
 @login_required
 def chat():
+    user = get_current_user()
+
+    # current provider from session or default to openai
+    current_provider = session.get("llm_provider", "openai")
+
+    related_articles = []
+
     if request.method == "POST":
-        user_input = request.form.get("user_input")
-        # todo: Connect chat_agent here
-    return render_template("chat.html")
+        # read provider choice from form, fallback to existing session provider
+        provider = request.form.get("llm_provider", current_provider).lower()
+        if provider not in ["openai", "gemini"]:
+            provider = "openai"
+
+        session["llm_provider"] = provider  # persist choice in session
+        current_provider = provider
+
+        question = request.form.get("user_input", "").strip()
+        if question:
+            answer, related_articles = chat_agent.answer_question(
+                user, question, provider=current_provider
+            )
+
+    # Reload history for display (after potential new messages)
+    history = (
+        ChatHistory.query.filter_by(user_id=user.id)
+        .order_by(ChatHistory.timestamp.asc())
+        .limit(50)
+        .all()
+    )
+
+    return render_template("chat.html", history=history, related_articles=related_articles, current_provider=current_provider)
 
 
 # --- Run App ---

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="chat-container">
+    <h2>NewsMind – Conversational News Assistant</h2>
+
+    <form method="POST" class="chat-form">
+        <div class="llm-selector">
+            <label><strong>Choose LLM:</strong></label><br>
+            <label>
+                <input type="radio" name="llm_provider" value="openai"
+                       {% if current_provider == 'openai' %}checked{% endif %}>
+                OpenAI
+            </label>
+            &nbsp;&nbsp;
+            <label>
+                <input type="radio" name="llm_provider" value="gemini"
+                       {% if current_provider == 'gemini' %}checked{% endif %}>
+                Gemini
+            </label>
+        </div>
+
+        <div class="chat-history">
+            {% for msg in history %}
+                <div class="chat-message {{ 'user-msg' if msg.role == 'user' else 'bot-msg' }}">
+                    <strong>{{ 'You' if msg.role == 'user' else 'NewsMind' }}:</strong>
+                    <p>{{ msg.message }}</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if related_articles %}
+            <div class="related-articles">
+                <h3>Articles used for the last answer</h3>
+                <ul>
+                    {% for art in related_articles %}
+                        <li>
+                            <a href="{{ url_for('article_detail', article_id=art.id) }}">
+                                {{ art.title }}
+                            </a>
+                            <span class="meta">
+                                ({{ art.source }} ·
+                                {{ art.published_at[:10] if art.published_at else '' }})
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <textarea name="user_input" rows="3" placeholder="Ask something about your news..."></textarea>
+        <button type="submit" class="btn">Send</button>
+    </form>
+</div>
+{% endblock %}

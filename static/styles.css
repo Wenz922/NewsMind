@@ -110,3 +110,15 @@ footer {
   to { transform: rotate(360deg); }
 }
 
+.llm-selector {
+  margin-bottom: 10px;
+}
+
+.chat-history {
+  border: 1px solid #ddd;
+  padding: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+

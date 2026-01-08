@@ -73,8 +73,9 @@ def fetch_from_newsapi(topic, language="en", page_size=5):
         summary = summarize_article(title, full_text)
         # Sentiment Analysis using OpenAI
         sentiment = analyze_sentiment(summary)
-        # Generate embedding
-        embedding = generate_embedding(summary)
+        # Generate embedding: both title and summary
+        combined_text = f"{title.strip()}\n\n{summary.strip()}"
+        embedding = generate_embedding(combined_text)
     
         # Save to DB Article
         try:

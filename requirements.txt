@@ -1,0 +1,16 @@
+# Core
+Flask
+Flask-SQLAlchemy
+python-dotenv
+
+# LLMs
+openai
+google-generativeai
+
+# NLP, Embeddings
+sentence-transformers
+numpy
+
+# News fetching, parsing
+requests
+newspaper3k

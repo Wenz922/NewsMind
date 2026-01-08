@@ -220,52 +220,52 @@ The stack is **Flask + SQLite + SQLAlchemy**, with a web UI for registration, to
 
 **Table:** `articles`
 
-| Field        | Type     | Description              |
-| ------------ | -------- | ------------------------ |
-| id           | Integer  | Primary key              |
-| title        | String   | Article title            |
-| author       | String   | Author name              |
-| source       | String   | News source              |
-| url          | String   | Article URL              |
-| category     | String   | Topic keyword            |
-| published_at | String   | Publication date         |
-| fetched_at   | DateTime | When it was added        |
-| summary      | Text     | LLM-generated summary    |
-| embedding    | Text     | Vector embedding (JSON)  |
-| sentiment    | String   | Sentiment score          |
+| Field              | Type     | Description                  |
+|--------------------| -------- |------------------------------|
+| id                 | Integer  | Primary key                  |
+| title              | String   | Article title                |
+| author             | String   | Author name                  |
+| source             | String   | News source                  |
+| url                | String   | Article URL                  |
+| category           | String   | Topic keyword                |
+| published_at       | String   | Publication date             |
+| fetched_at         | DateTime | When it was added            |
+| summary            | Text     | LLM-generated summary        |
+| embedding          | Text     | Vector embedding (JSON)      |
+| sentiment          | String   | Sentiment score              |
 
 **Table:** `user_articles`
 
-| Field        | Type     | Description                  |
-| ------------ | -------- | ---------------------------- |
-| id           | Integer  | Primary key                  |
-| action       | Text     | `liked`, `viewed`, `linked`  |
-| rating       | Integer  | User adds 1-10 score         |
-| notes        | Text     | User adds notes              |
-| timestamp    | DateTime | Changing time                |
-| user_id      | Integer  | Foreign key to User          |
-| article_id   | Integer  | Foreign key to Article       |
+| Field              | Type     | Description                  |
+|--------------------| -------- | ---------------------------- |
+| id                 | Integer  | Primary key                  |
+| action             | Text     | `liked`, `viewed`, `linked`  |
+| rating             | Integer  | User adds 1-10 score         |
+| notes              | Text     | User adds notes              |
+| timestamp          | DateTime | Changing time                |
+| user_id            | Integer  | Foreign key to User          |
+| article_id         | Integer  | Foreign key to Article       |
 
 **Table:** `chat_history`
 
-| Field        | Type     | Description              |
-| ------------ | -------- | ------------------------ |
-| id           | Integer  | Primary key              |
-| role         | String   | `user`, `bot`            |
-| message      | Text     | Chatting messages        |
-| timestamp    | DateTime | Messaging time           |
-| user_id      | Integer  | Foreign key to User      |
-| article_id   | Integer  | Foreign key to Article   |
+| Field              | Type     | Description                  |
+|--------------------| -------- |------------------------------|
+| id                 | Integer  | Primary key                  |
+| role               | String   | `user`, `bot`                |
+| message            | Text     | Chatting messages            |
+| timestamp          | DateTime | Messaging time               |
+| user_id            | Integer  | Foreign key to User          |
+| article_id         | Integer  | Foreign key to Article       |
 
 **Table:** `statistics`
 
-| Field          | Type     | Description              |
-| -------------- | -------- | ------------------------ |
-| id             | Integer  | Primary key              |
-| topic          | String   | mentioned topics         |
-| sentiment_avg  | Float    | Sentiment on average     |
-| mention_count  | Integer  | Sum of mentioned topics  |
-| date           | DateTime | Statistic time           |
+| Field              | Type     | Description                  |
+|--------------------| -------- |------------------------------|
+| id                 | Integer  | Primary key                  |
+| topic              | String   | mentioned topics             |
+| sentiment_avg      | Float    | Sentiment on average         |
+| mention_count      | Integer  | Sum of mentioned topics      |
+| date               | DateTime | Statistic time               |
 
 ---
 
@@ -293,5 +293,5 @@ The stack is **Flask + SQLite + SQLAlchemy**, with a web UI for registration, to
 ---
 
 ## License
-- This is a personal / learning project.
+- This is a personal LLMs project.
 - MIT License © 2026 Wenzheng Cai

@@ -53,7 +53,7 @@ def summarize_article(title: str, text: str) -> str:
         )
         summary = response.choices[0].message.content.strip()
         # Post-processing: normalize bullets
-        cleaned_summary = summary.replace(" - ", "\n- ").replace("•", "- ")
+        cleaned_summary = summary.replace(". - ", "\n. - ").replace("•", "- ")
         # Remove double newlines between bullets
         while "\n\n-" in cleaned_summary:
             cleaned_summary = cleaned_summary.replace("\n\n-", "\n-")
